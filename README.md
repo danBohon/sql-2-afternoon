@@ -30,14 +30,71 @@ SELECT a.Name, b.Name FROM SomeTable a JOIN AnotherTable b ON a.someid = b.somei
 <br />
 
 1. Get all invoices where the `UnitPrice` on the `InvoiceLine` is greater than $0.99.
+```
+select *
+from Invoice i
+join InvoiceLine il ON il.invoiceId = i.invoiceId
+where il.UnitPrice > 0.99;
+```
 2. Get the `InvoiceDate`, customer `FirstName` and `LastName`, and `Total` from all invoices.
+```
+Select 
+i.InvoiceDate, c.FirstName, c.LastName, i.Total
+from Invoice i
+join Customer c
+on i.CustomerId = c.CustomerId
+```
 3. Get the customer `FirstName` and `LastName` and the support rep's `FirstName` and `LastName` from all customers. 
     * Support reps are on the Employee table.
+```
+select c.FirstName, c.LastName, e.FirstName, e.LastName
+from Customer c
+join Employee e
+on SupportRepId = EmployeeId
+```
 4. Get the album `Title` and the artist `Name` from all albums.
+```
+Select al.Title, ar.Name
+from Artist ar
+join Album al
+on ar.ArtistId = al.ArtistId
+
+```
 5. Get all PlaylistTrack TrackIds where the playlist `Name` is Music.
+```
+select TrackId
+from Playlist pl
+join PlaylistTrack plt
+on plt.PlaylistId = pl.PlaylistId
+where Name = "Music";
+```
 6. Get all Track `Name`s for `PlaylistId` 5.
+```
+select t.Name
+from PlaylistTrack plt
+join Track t
+on t.TrackId = plt.TrackId
+where plt.PlaylistId = 5;
+```
 7. Get all Track `Name`s and the playlist `Name` that they're on ( 2 joins ).
+```
+select t.Name, pl.Name
+from PlaylistTrack plt
+join Playlist pl
+on pl.PlaylistId = plt.PlaylistId
+join Track t
+on t.TrackId = plt.TrackId;
+```
 8. Get all Track `Name`s and Album `Title`s that are the genre `"Alternative"` ( 2 joins ).
+```
+select t.Name, a.Title
+from Track t
+join Genre g
+on t.GenreId = g.GenreId
+join Album a
+on t.AlbumId = a.AlbumId
+where g.Name = "Alternative";
+```
 
 ### Solution
 
@@ -180,12 +237,65 @@ SELECT Name, Email FROM Athlete WHERE AthleteId IN ( SELECT PersonId FROM PieEat
 <br />
 
 1. Get all invoices where the `UnitPrice` on the `InvoiceLine` is greater than $0.99.
+```
+select *
+from Invoice
+where InvoiceId in 
+(select InvoiceId from InvoiceLine
+where UnitPrice > 0.99)
+```
 2. Get all Playlist Tracks where the playlist name is Music.
+```
+select *
+from PlaylistTrack
+where PlaylistId in
+(select PlaylistId from Playlist
+ where name = "Music");
+```
 3. Get all Track names for `PlaylistId` 5.
+```
+ select Name
+ from Track
+ where TrackId in(
+   select TrackId 
+   from PlaylistTrack
+   where PlaylistId = 5
+ );
+```
 4. Get all tracks where the `Genre` is Comedy.
+```
+ select *
+ from Track
+ where GenreId in(
+   select GenreId 
+   from Genre
+   where Name = "Comedy"
+ );
+```
 5. Get all tracks where the `Album` is Fireball.
+```
+ select *
+ from Track
+ where AlbumId in(
+   select AlbumId 
+   from Album
+   where Name = "Fireball"
+ );
+```
 6. Get all tracks for the artist Queen ( 2 nested subqueries ).
-
+```
+ select *
+ from Track
+ where AlbumId in(
+   select AlbumId 
+   from Album
+   where ArtistId in(
+     select ArtistId
+     from Artist
+     where Name = "Queen"
+     )
+ );
+```
 ### Solution
 
 <details>
@@ -291,10 +401,39 @@ UPDATE Athletes SET sport = 'Picklball' WHERE sport = 'pockleball';
 <br />
 
 1. Find all customers with fax numbers and set those numbers to `null`.
+```
+update Customer
+set Fax = null
+where Fax is not null;
+```
 2. Find all customers with no company (null) and set their company to `"Self"`.
+```
+update Customer
+set Company = "Self"
+where Company is null;
+```
 3. Find the customer `Julia Barnett` and change her last name to `Thompson`.
+```
+set LastName = "Thompson"
+where FirstName = "Julia" 
+and LastName = "Barnett";
+```
 4. Find the customer with this email `luisrojas@yahoo.cl` and change his support rep to `4`.
+```
+update Customer
+set SupportRepId = 4;
+where Email = "luisrojas@yahoo.cl" 
+
+```
 5. Find all tracks that are the genre `Metal` and have no composer. Set the composer to `"The darkness around us"`.
+```
+update Track
+set Composer = "The darkness around us"
+where GenreId = (select GenreId 
+                 from Genre
+                 where Name = "Metal" )
+and Composer is null;
+```
 6. Refresh your page to remove all database changes.
 
 ### Solution
@@ -385,8 +524,27 @@ GROUP BY [Column];
 <br />
 
 1. Find a count of how many tracks there are per genre. Display the genre name with the count.
+```
+select count(*), g.Name
+from Track t
+join Genre g
+on t.GenreId = g.GenreId
+group by g.Name;
+```
 2. Find a count of how many tracks are the `"Pop"` genre and how many tracks are the `"Rock"` genre.
+```
+SELECT Count(*), g.Name
+FROM Track t
+JOIN Genre g ON g.GenreId = t.GenreId
+WHERE g.Name = 'Pop' OR g.Name = 'Rock'
+GROUP BY g.Name;
+```
 3. Find a list of all artists and how many albums they have.
+
+select ar.Name, count(*)
+from Artist ar
+Join Album al on ar.ArtistId = al.ArtistId
+group by al.ArtistId;
 
 ### Solution
 
@@ -452,8 +610,20 @@ FROM [Table];
 <br />
 
 1. From the `Track` table find a unique list of all `Composer`s.
+```
+select distinct Composer
+from Track
+```
 2. From the `Invoice` table find a unique list of all `BillingPostalCode`s.
+```
+select distinct BillingPostalCode
+from Invoice;
+```
 3. From the `Customer` table find a unique list of all `Company`s.
+```
+select distinct Company
+from Customer;
+```
 
 <details>
 
@@ -535,9 +705,24 @@ DELETE FROM [Table] WHERE [Condition]
 
 <br />
 
-1. Copy, paste, and run the SQL code from the summary.
+1. Copy, paste, and run the SQL code from the summary.DELETE 
+```
+FROM practice_delete 
+WHERE Type = "bronze";
+```
+
 2. Delete all `"bronze"` entries from the table.
+```
+DELETE 
+FROM practice_delete 
+WHERE Type = "bronze";
+```
 3. Delete all `"silver"` entries from the table.
+```
+DELETE 
+FROM practice_delete 
+WHERE Value = 150;
+```
 4. Delete all entries whose value is equal to `150`.
 
 ### Solution
